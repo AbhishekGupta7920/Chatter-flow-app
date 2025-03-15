@@ -48,20 +48,30 @@ export const useChatStore = create((set, get) => ({
     if (!selectedUser) return;
 
     const socket = useAuthStore.getState().socket;
+    if (!socket) {
+      console.error("Socket is not initialized");
+      return;
+    }
 
+    // Remove any existing listener to avoid duplicates
+    socket.off("newMessage");
+
+    // Add a new listener
     socket.on("newMessage", (newMessage) => {
       const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
       if (!isMessageSentFromSelectedUser) return;
 
-      set({
-        messages: [...get().messages, newMessage],
-      });
+      set((state) => ({
+        messages: [...state.messages, newMessage],
+      }));
     });
   },
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
-    socket.off("newMessage");
+    if (socket) {
+      socket.off("newMessage"); // Remove the listener
+    }
   },
 
   setSelectedUser: (selectedUser) => set({ selectedUser }),
