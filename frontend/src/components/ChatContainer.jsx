@@ -1,10 +1,9 @@
 import { useChatStore } from "../store/useChatStore";
 import { useEffect, useRef } from "react";
-
+import { useAuthStore } from "../store/useAuthStore";
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import MessageSkeleton from "./skeletons/MessageSkeleton";
-import { useAuthStore } from "../store/useAuthStore";
 import { formatMessageTime } from "../lib/utils";
 
 const ChatContainer = () => {
@@ -19,19 +18,25 @@ const ChatContainer = () => {
   const { authUser } = useAuthStore();
   const messageEndRef = useRef(null);
 
+  // Fetch messages and subscribe to new messages
   useEffect(() => {
-    getMessages(selectedUser._id);
+    if (selectedUser && selectedUser._id) {
+      getMessages(selectedUser._id);
+      subscribeToMessages();
+    }
 
-    subscribeToMessages();
+    // Cleanup on unmount or when selectedUser changes
+    return () => {
+      unsubscribeFromMessages();
+    };
+  }, [selectedUser, getMessages, subscribeToMessages, unsubscribeFromMessages]);
 
-    return () => unsubscribeFromMessages();
-  }, [selectedUser._id, getMessages, subscribeToMessages, unsubscribeFromMessages]);
-
+  // Scroll to the bottom when messages change
   useEffect(() => {
-    if (messageEndRef.current && messages) {
+    if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages]); // Triggered whenever `messages` changes
 
   if (isMessagesLoading) {
     return (
@@ -53,7 +58,7 @@ const ChatContainer = () => {
             key={message._id}
             className={`chat ${message.senderId === authUser._id ? "chat-end" : "chat-start"}`}
           >
-            <div className="chat-bubble relative  my-1 px-3">
+            <div className="chat-bubble relative my-1 px-3">
               {/* Text/Image Content */}
               <div className="px-2">
                 {message.image && (
@@ -63,7 +68,7 @@ const ChatContainer = () => {
                     className="sm:max-w-[200px] rounded-md mb-3"
                   />
                 )}
-                {message.text && <p className=" mb-2">{message.text}</p>}
+                {message.text && <p className="mb-2">{message.text}</p>}
               </div>
 
               {/* Timestamp at Bottom-Right */}
@@ -72,13 +77,14 @@ const ChatContainer = () => {
               </time>
             </div>
           </div>
-
-
         ))}
+        {/* Place the ref at the end of the messages container */}
+        <div ref={messageEndRef} />
       </div>
 
       <MessageInput />
     </div>
   );
 };
+
 export default ChatContainer;
