@@ -17,6 +17,11 @@ const LoginPage = () => {
     login(formData);
   };
 
+  // guest login
+  const handleGuestLogin = () => {
+    login({ email: "guest@gmail.com", password: "Guest@123" });
+  };
+
   return (
     <div className="h-screen grid lg:grid-cols-2">
       {/* Left Side - Form */}
@@ -95,6 +100,9 @@ const LoginPage = () => {
                 "Sign in"
               )}
             </button>
+            <p onClick={handleGuestLogin} type="submit" className="link link-primary" disabled={isLoggingIn}>
+              Login as Guest
+            </p>
           </form>
 
           <div className="text-center">
